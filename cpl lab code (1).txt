@@ -1,0 +1,664 @@
+---------------------------------------------------------------- 1] Minesweeper (Online Judge) -------------------------------------------------------------------------
+
+MAX_SIZE = 100
+
+field_num = 0
+
+while True:
+    n, m = map(int, input().split())
+    if n == 0 and m == 0:
+        break
+
+    field_num += 1
+
+    field = []
+    for _ in range(n):
+        row = input()
+        field.append(list(row))
+
+    # Process the field
+    for i in range(n):
+        for j in range(m):
+            if field[i][j] == '.':
+                count = 0
+
+                # Check all 8 adjacent cells
+                for di in [-1, 0, 1]:
+                    for dj in [-1, 0, 1]:
+                        if di == 0 and dj == 0:
+                            continue
+
+                        ni = i + di
+                        nj = j + dj
+
+                        if 0 <= ni < n and 0 <= nj < m and field[ni][nj] == '*':
+                            count += 1
+
+                field[i][j] = str(count)
+
+    # Print the result
+    if field_num > 1:
+        print()
+    print(f"Field #{field_num}:")
+    for i in range(n):
+        print(''.join(field[i]))
+
+######### sample input 
+4 4
+...*
+*...
+**..
+....
+############## output
+111*
+*321
+**10
+2210
+######### sample input 
+3 5
+....*
+**...
+.....
+############## output
+2211*
+**111
+22100
+
+----------------------------------------------------------- 2] sale by match (Online Judge) -----------------------------------------------------------
+
+n = int(input())
+ar = list(map(int, input().split()))
+fre = [0] * n
+count = 0
+c = 0
+
+for i in range(n):
+    cnt = 0
+    for j in range(n):
+        if ar[i] == ar[j]:
+            cnt += 1
+            fre[j] = 0
+    fre[i] = cnt
+
+for i in range(n):
+    c += fre[i] // 2
+
+print(c)
+
+
+
+######### sample input
+8
+1 2 1 2 5 6 1 5 
+######## output
+3
+
+---------------------------------------------- 3] contest scoreboard (Elementary data structure)  ---------------------------------------------------------------
+
+class Contestant:
+    def __init__(self, number):
+        self.contestant = number
+        self.solved = 0
+        self.penalty = 0
+        self.incorrect_submissions = [0] * 10  # Problems 1-9
+        self.solved_problems = [0] * 10        # Problems 1-9
+
+def process_submission(contestants, c, p, t, L):
+    cont = contestants[c]
+    if cont.solved_problems[p] == 0:
+        if L == 'C':
+            cont.solved_problems[p] = 1
+            cont.solved += 1
+            cont.penalty += t + 20 * cont.incorrect_submissions[p]
+        elif L == 'I':
+            cont.incorrect_submissions[p] += 1
+        # Ignore other submission types
+
+def compare(c):
+    return (-c.solved, c.penalty, c.contestant)
+
+def main():
+    cases = int(input())
+    input()  # Skip blank line
+
+    for _ in range(cases):
+        contestants = {i: Contestant(i) for i in range(1, 101)}
+        present = set()
+
+        while True:
+            try:
+                line = input()
+                if line.strip() == "":
+                    break
+                parts = line.strip().split()
+                if len(parts) != 4:
+                    continue
+                c, p, t, L = int(parts[0]), int(parts[1]), int(parts[2]), parts[3]
+                present.add(c)
+                process_submission(contestants, c, p, t, L)
+            except EOFError:
+                break
+
+        results = [contestants[c] for c in present]
+        results.sort(key=compare)
+
+        for c in results:
+            print(f"{c.contestant} {c.solved} {c.penalty}")
+
+        if _ < cases - 1:
+            print()
+
+if __name__ == "__main__":
+    main()
+############ sample input 
+
+1
+
+1 2 10 I
+3 1 11 C
+1 2 19 R
+1 2 21 C
+1 1 25 C
+3 1 35 C
+
+################ output
+
+1 2 56
+3 1 11
+
+
+-------------------------------------------------- 4] Crypt Kicker -----------------------------------------------------------------------
+
+from collections import defaultdict
+
+def get_pattern(word):
+    map_char = {}
+    pattern = ''
+    next_char = 'a'
+    for c in word:
+        if c not in map_char:
+            map_char[c] = next_char
+            next_char = chr(ord(next_char) + 1)
+        pattern += map_char[c]
+    return pattern
+
+def decrypt(enc, pat_dict):
+    words = enc.split()
+    candidates = []
+
+    for w in words:
+        pat = get_pattern(w)
+        if pat in pat_dict:
+            candidates.append(pat_dict[pat])
+        else:
+            return '*' * len(enc)
+
+    map_char, rev_map = {}, {}
+    if backtrack(words, candidates, 0, map_char, rev_map):
+        return ''.join(map_char.get(c, ' ') if c != ' ' else ' ' for c in enc)
+    return '*' * len(enc)
+
+def backtrack(words, candidates, idx, map_char, rev_map):
+    if idx == len(words):
+        return True
+
+    word = words[idx]
+    for cand in candidates[idx]:
+        temp_map = dict(map_char)
+        temp_rev = dict(rev_map)
+        valid = True
+        for ec, dc in zip(word, cand):
+            if (ec in temp_map and temp_map[ec] != dc) or (dc in temp_rev and temp_rev[dc] != ec):
+                valid = False
+                break
+            temp_map[ec] = dc
+            temp_rev[dc] = ec
+        if valid and backtrack(words, candidates, idx + 1, temp_map, temp_rev):
+            map_char.clear()
+            map_char.update(temp_map)
+            return True
+    return False
+
+def main():
+    n = int(input())
+    dict_words = [input().strip() for _ in range(n)]
+    pat_dict = defaultdict(list)
+    for word in dict_words:
+        pat_dict[get_pattern(word)].append(word)
+
+    try:
+        while True:
+            line = input()
+            if line.strip():
+                print(decrypt(line.strip(), pat_dict))
+    except EOFError:
+        pass
+
+if __name__ == "__main__":
+    main()
+
+
+############ sample input 
+
+6
+and
+dick
+jane
+puff
+spot
+yertle
+bjvg xsb hxsn xsb qymm xsb rqat xsb pnetfn
+
+################ output
+
+dick and jane and puff and spot and yertle
+
+
+------------------------------------------------- 5] Automated judge script (Strings) ---------------------------------------------------------------
+
+import sys
+
+def read_lines(n):
+    lines = []
+    for _ in range(n):
+        line = input().rstrip('\n')
+        lines.append(line)
+    return lines
+
+def extract_numbers(s):
+    return ''.join(ch for ch in s if ch.isdigit())
+
+def compare_exact(sol, out):
+    return sol == out
+
+def compare_numbers(sol, out):
+    sol_numbers = ''.join(extract_numbers(line) for line in sol)
+    out_numbers = ''.join(extract_numbers(line) for line in out)
+    return sol_numbers == out_numbers
+
+def main():
+    run = 1
+    while True:
+        try:
+            n = int(input())
+            if n == 0:
+                break
+            solution = read_lines(n)
+            m = int(input())
+            output = read_lines(m)
+
+            if compare_exact(solution, output):
+                print(f"Run #{run}: Accepted")
+            elif compare_numbers(solution, output):
+                print(f"Run #{run}: Presentation Error")
+            else:
+                print(f"Run #{run}: Wrong Answer")
+            run += 1
+        except EOFError:
+            break
+
+if __name__ == "__main__":
+    main()
+
+############ sample input 
+
+2
+The answer is: 42
+Another line.
+2
+The answer is: 42
+Another line.
+2
+The answer is: 42
+Another line.
+2
+The answer   is:  42
+Another  line.
+2
+The answer is: 42
+Another line.
+2
+The answer is: 24
+Another line.
+0
+
+################ output
+
+Run #1: Accepted
+Run #2: Presentation Error
+Run #3: Wrong Answer
+
+----------------------------------------------------------------- 6] WERTYU (Strings) ------------------------------------------------------------------------------------
+
+def get_decoded_char(c):
+    qwerty = "1234567890-=QWERTYUIOP[]\\ASDFGHJKL;'ZXCVBNM,./"
+    pos = qwerty.find(c)
+    if pos > 0:
+        return qwerty[pos - 1]
+    return c
+
+def main():
+    try:
+        while True:
+            line = input()
+            decoded = ''.join(get_decoded_char(c) for c in line)
+            print(decoded)
+    except EOFError:
+        pass
+
+if __name__ == "__main__":
+    main()
+
+############ sample input 
+
+O S, GOMR YPFSU/
+
+################ output
+
+I AM FINE TODAY.
+
+---------------------------------------------------------------- 7] Shoemaker's problem (Sorting) -------------------------------------------------------
+
+class Job:
+    def __init__(self, time, fine, index):
+        self.time = time
+        self.fine = fine
+        self.index = index
+
+    def ratio(self):
+        return self.fine / self.time
+
+def compare(job):
+    # Return tuple for sorting: (-ratio, index)
+    return (-job.ratio(), job.index)
+
+def main():
+    cases = int(input())
+    for case in range(cases):
+        if case > 0:
+            print()
+        n = int(input())
+        jobs = []
+        for i in range(n):
+            t, f = map(int, input().split())
+            jobs.append(Job(t, f, i + 1))
+        
+        jobs.sort(key=compare)
+        print(' '.join(str(job.index) for job in jobs))
+
+if __name__ == "__main__":
+    main()
+
+
+############ sample input 
+
+2
+3
+1 2
+2 4
+3 6
+3
+1 2
+2 2
+3 2
+
+################ output
+
+1 2 3
+
+1 2 3
+
+---------------------------------------------------------------------------- 8] Longest Nap (Sorting) --------------------------------------------------------------------
+
+def parse_time(t):
+    h, m = map(int, t.split(':'))
+    return h * 60 + m
+
+def minutes_to_time(minutes):
+    h = minutes // 60
+    m = minutes % 60
+    return f"{h:02d}:{m:02d}"
+
+def main():
+    day = 0
+    try:
+        while True:
+            line = input()
+            if not line:
+                continue
+            s = int(line)
+            day += 1
+            appointments = []
+
+            for _ in range(s):
+                line = input().strip()
+                t1, t2 = line.split()
+                start = parse_time(t1)
+                end = parse_time(t2)
+                appointments.append((start, end))
+
+            appointments.sort()
+
+            nap_start = parse_time("10:00")
+            max_duration = 0
+
+            # Check before first appointment
+            if appointments[0][0] > nap_start:
+                max_duration = appointments[0][0] - nap_start
+
+            for i in range(1, len(appointments)):
+                gap = appointments[i][0] - appointments[i - 1][1]
+                if gap > max_duration:
+                    max_duration = gap
+                    nap_start = appointments[i - 1][1]
+
+            # Check after last appointment
+            end_of_day = parse_time("18:00")
+            if appointments[-1][1] < end_of_day:
+                gap = end_of_day - appointments[-1][1]
+                if gap > max_duration:
+                    max_duration = gap
+                    nap_start = appointments[-1][1]
+
+            nap_time = minutes_to_time(nap_start)
+            print(f"Day #{day}: the longest nap starts at {nap_time} and will last for ", end='')
+            if max_duration >= 60:
+                h = max_duration // 60
+                m = max_duration % 60
+                print(f"{h} hours and {m} minutes.")
+            else:
+                print(f"{max_duration} minutes.")
+    except EOFError:
+        pass
+
+if __name__ == "__main__":
+    main()
+
+
+############ sample input 
+
+4
+10:00 12:00
+13:00 15:00
+15:30 17:00
+16:00 18:00
+3
+10:00 11:00
+12:00 13:00
+16:00 17:00
+
+################ output
+
+Day #1: the longest nap starts at 12:00 and will last for 60 minutes.
+Day #2: the longest nap starts at 13:00 and will last for 180 minutes.
+
+------------------------------------------------------------------------ 9] A multiplication Game (Arithmatical and algebra)  ---------------------------------------------------------
+
+def main():
+    try:
+        while True:
+            line = input()
+            if not line:
+                continue
+            n = int(line)
+            p = 1
+            turn = 0  # 0: Stan, 1: Ollie
+
+            while p < n:
+                if turn == 0:
+                    p *= 9
+                else:
+                    p *= 2
+                turn = 1 - turn
+
+            if turn == 1:
+                print("Stan wins.")
+            else:
+                print("Ollie wins.")
+    except EOFError:
+        pass
+
+if __name__ == "__main__":
+    main()
+
+############ sample input
+
+162
+17
+34012226
+
+################ output
+
+Stan wins.
+Ollie wins.
+Stan wins.
+
+
+------------------------------------------------- 10] Revers And Add (Arithmatical and algebra)  ---------------------------------------------------------------------
+
+
+def reverse_number(num):
+    return int(str(num)[::-1])
+
+def is_palindrome(num):
+    return num == reverse_number(num)
+
+def main():
+    N = int(input())
+    for _ in range(N):
+        P = int(input())
+        iterations = 0
+        current = P
+
+        while not is_palindrome(current) and iterations < 1000:
+            reversed_num = reverse_number(current)
+            current += reversed_num
+            iterations += 1
+
+        print(f"{iterations} {current}")
+
+if __name__ == "__main__":
+    main()
+
+############ sample input
+
+3
+195
+265
+750
+
+################ output
+
+4 9339
+5 45254
+3 6666
+
+--------------------------------------------------- 11] Steps (Combinatorics) ------------------------------------------------------------------
+
+import math
+
+def main():
+    n = int(input())
+    for _ in range(n):
+        x, y = map(int, input().split())
+        d = y - x
+
+        if d == 0:
+            print(0)
+            continue
+
+        k = int(math.sqrt(d))
+        while k * k > d:
+            k -= 1
+        while (k + 1) * (k + 1) <= d:
+            k += 1
+
+        if d <= k * k:
+            min_steps = 2 * k - 1
+        else:
+            min_steps = 2 * k
+
+        print(min_steps)
+
+if __name__ == "__main__":
+    main()
+
+############ sample input
+
+3
+0 3
+1 5
+45 50
+
+################ output
+
+2
+3
+4
+
+------------------------------------------------- 12] The Priest mathmatician (Combinatorics) ------------------------------------------------
+
+import sys
+
+MAX_DISKS = 10000
+dp = [0] * (MAX_DISKS + 1)
+
+def precompute():
+    dp[0] = 0
+    dp[1] = 1
+    dp[2] = 3
+
+    for n in range(3, MAX_DISKS + 1):
+        dp[n] = float('inf')
+        for k in range(1, n):
+            if n - k > 60:
+                continue  # Avoid overflow
+            moves = 2 * dp[k] + (1 << (n - k)) - 1
+            if moves < dp[n]:
+                dp[n] = moves
+
+def main():
+    precompute()
+    for line in sys.stdin:
+        if line.strip() == '':
+            continue
+        N = int(line.strip())
+        print(dp[N])
+
+if __name__ == "__main__":
+    main()
+
+############ sample input
+
+1
+2
+3
+10
+
+################ output
+
+1
+3
+5
+49
+
